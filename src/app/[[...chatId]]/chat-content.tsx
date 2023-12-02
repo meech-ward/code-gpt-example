@@ -11,14 +11,27 @@ import { vscDarkPlus as dark } from "react-syntax-highlighter/dist/esm/styles/pr
 
 import { convertFileToBase64 } from "@/lib/utils"
 
-export default function ChatContent() {
-  const [assisnantResponse, setAssistantResponse] = useState("")
+export default function ChatContent({
+  createChat,
+  initialAssistantResponse = "",
+}: {
+  createChat: () => Promise<{id: string}>
+  initialAssistantResponse?: string
+}) {
+  const [assisnantResponse, setAssistantResponse] = useState(initialAssistantResponse)
   const [isLoading, setIsLoading] = useState(false)
   const abortControllerRef = useRef<AbortController | null>(null)
+  const [chatId, setChatId] = useState("")
 
   const handleSubmit = async (value: string, file?: File) => {
-    // upload it somewhere like s3
-    // image url
+    let currentChatId = chatId
+    if (!currentChatId) {
+      // create a new chat in the database
+      const chat = await createChat()
+      currentChatId = chat.id
+      // and get the id and store it in state
+      setChatId(chat.id)
+    }
 
     setIsLoading(true)
     setAssistantResponse("")
@@ -39,9 +52,9 @@ export default function ChatContent() {
         },
       ]
 
-      body = JSON.stringify({ content })
+      body = JSON.stringify({ content, chatId: currentChatId })
     } else {
-      body = JSON.stringify({ content: value })
+      body = JSON.stringify({ content: value, chatId: currentChatId })
     }
 
     // console.log("submit", value, file);
