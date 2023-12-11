@@ -1,21 +1,19 @@
 "use client"
 
 import { useState, useRef } from "react"
-
 import ChatInput from "@/components/chat-input"
-
 import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { vscDarkPlus as dark } from "react-syntax-highlighter/dist/esm/styles/prism"
-
+import { CreateChat } from "./actions"
 import { convertFileToBase64 } from "@/lib/utils"
 
 export default function ChatContent({
   createChat,
   initialAssistantResponse = "",
 }: {
-  createChat: () => Promise<{id: string}>
+  createChat: CreateChat
   initialAssistantResponse?: string
 }) {
   const [assisnantResponse, setAssistantResponse] = useState(initialAssistantResponse)

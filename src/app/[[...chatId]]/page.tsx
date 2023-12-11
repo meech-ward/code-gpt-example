@@ -1,13 +1,12 @@
 import ChatContent from "./chat-content"
 import ChatList, { ChatListSkeleton } from "./chat-list"
-
 import { createChat } from "./actions"
 import { Suspense } from "react"
 import ChatContentWrapper from "./chat-content-wrapper"
 
 export default function Page({ params }: { params: { chatId?: string[] } }) {
   const chatId = params.chatId?.[0]
-  console.log({chatId})
+  
   return (
     <div className="w-full h-full flex">
       <div className="w-80 h-full max-h-full border-r-2 border-neutral-300 dark:border-neutral-700 overflow-auto">

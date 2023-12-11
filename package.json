@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@kinde-oss/kinde-auth-nextjs": "^2.0.10",
     "@libsql/client": "^0.4.0-pre.4",
     "ai": "^2.2.26",
     "clsx": "^2.0.0",

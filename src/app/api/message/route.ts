@@ -7,7 +7,9 @@ import { initialProgrammerMessages } from "./messages"
 import { db } from "@/db"
 import { chats } from "@/db/schema/chats"
 import { messages } from "@/db/schema/messages"
-import { eq } from "drizzle-orm"
+import { eq, and } from "drizzle-orm"
+
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server"
 
 export const runtime = "edge"
 
@@ -17,14 +19,24 @@ const openai = new OpenAI({
 
 export async function POST(req: Request) {
   const { content, chatId } = await req.json()
+  const { getUser } = getKindeServerSession()
+  const user = await getUser()
 
-  // check if the user is logged in
-  // make sure that chat belongs to them
+  if (!user) {
+    return new Response("not logged in", { status: 401 })
+  }
+
   if (!chatId) {
     return new Response("chatId is required", { status: 400 })
   }
 
-  const chat = await db.select().from(chats).where(eq(chats.id, chatId)).get()
+  // check the chat belongs to the currently logged in user
+
+  const chat = await db
+    .select()
+    .from(chats)
+    .where(and(eq(chats.id, chatId), eq(chats.userId, user.id)))
+    .get()
 
   if (!chat) {
     return new Response("chat is not found", { status: 400 })
@@ -41,7 +53,11 @@ export async function POST(req: Request) {
     .all()
 
   const chatCompletion = await openai.chat.completions.create({
-    messages: [...initialProgrammerMessages, ...allDBMessages, { role: "user", content }],
+    messages: [
+      ...initialProgrammerMessages,
+      ...allDBMessages,
+      { role: "user", content },
+    ],
     model: "gpt-4-vision-preview",
     stream: true,
     max_tokens: 4096,

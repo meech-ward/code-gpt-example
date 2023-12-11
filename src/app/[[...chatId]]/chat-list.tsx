@@ -1,13 +1,23 @@
 import { db } from "@/db"
+import { eq } from "drizzle-orm"
 import { chats as chatsTable } from "@/db/schema/chats"
 import { unstable_cache as cache } from "next/cache"
 import Link from "next/link"
 
+import {
+  RegisterLink,
+  LoginLink,
+  LogoutLink,
+} from "@kinde-oss/kinde-auth-nextjs/components"
+
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server"
+
 const getChats = cache(
-  async () =>
+  async (userId: string) =>
     await db
       .select({ id: chatsTable.id, name: chatsTable.name })
       .from(chatsTable)
+      .where(eq(chatsTable.userId, userId))
       .all(),
   ["get-chats-for-chat-list"],
   {
@@ -16,15 +26,32 @@ const getChats = cache(
 )
 
 export default async function ChatList() {
-  const chats = await getChats()
+  const { getUser } = getKindeServerSession()
+  const user = await getUser()
+
+  const chats = user ? await getChats(user.id) : []
 
   return (
-    <div className="flex flex-col p-10 gap-y-4">
-      {chats.map((chat) => (
-        <Link key={chat.id} href={`/${chat.id}`} className="truncate">
-          {chat.name}
-        </Link>
-      ))}
+    <div className="flex flex-col p-10 justify-between h-full">
+      <div className="flex flex-colgap-y-4">
+        {chats.map((chat) => (
+          <Link key={chat.id} href={`/${chat.id}`} className="truncate">
+            {chat.name}
+          </Link>
+        ))}
+      </div>
+
+      {user ? (
+        <div className="flex flex-col">
+          <p>{user.given_name}</p>
+          <LogoutLink>LogOut</LogoutLink>
+        </div>
+      ) : (
+        <div className="flex flex-col">
+          <LoginLink>Sign in</LoginLink>
+          <RegisterLink>Sign up</RegisterLink>
+        </div>
+      )}
     </div>
   )
 }
